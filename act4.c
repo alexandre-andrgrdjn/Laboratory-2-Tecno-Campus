@@ -2,7 +2,6 @@
 #include <string.h>
 #include "gameoflife.h"
 
-#define MAX_HISTORY 1000  // Memory generation limit
 
 // Function to check if two grids are equal (for static/loop detection)
 int grids_are_equal(int rows, int cols, int grid1[rows][cols], int grid2[rows][cols]) {
@@ -53,8 +52,6 @@ int main(int argc, char *argv[]) {
             printf("Static pattern detected at generation %d, stopping...\n", gen + 1);
             break;
         }
-
-
 
 // Check for loop pattern
         if (detect_loop(rows, cols, grid, history, history_count)) {
