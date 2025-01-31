@@ -103,6 +103,21 @@ void run_game_of_life(int rows, int cols, int generations,int history[MAX_HISTOR
 
 }   
 
+void write_array_to_file(const char *filename, int rep[MAX_BOARDS],int size){
+    FILE *file = fopen(filename,"r");
+if (!file) {
+    perror("Error during opening file");
+    return -1;
+}
+
+for (int i = 0; i < size; i++)
+{
+    fprintf(file,"%d\n", rep[i]);
+}
+
+fclose(file);
+
+}
 
 int main(int argc, char *argv[]) {
     if (argc != 4) {
