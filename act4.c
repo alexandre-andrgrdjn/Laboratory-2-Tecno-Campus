@@ -2,7 +2,7 @@
 #include <string.h>
 #include "gameoflife.h"
 
-#define MAX_HISTORY 1000  // Limite de générations en mémoire
+#define MAX_HISTORY 1000  // Memory generation limit
 
 // Function to check if two grids are equal (for static/loop detection)
 int grids_are_equal(int rows, int cols, int grid1[rows][cols], int grid2[rows][cols]) {
