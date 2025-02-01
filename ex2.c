@@ -1,6 +1,27 @@
 #include "gameoflife.h"
-#include <math.h>
 
+
+// Function to check if two grids are equal (for static/loop detection)
+int grids_are_equal(int rows, int cols, int grid1[rows][cols], int grid2[rows][cols]) {
+    for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < cols; j++) {
+            if (grid1[i][j] != grid2[i][j]) {
+                return 0;  // Grids are not equal
+            }
+        }
+    }
+    return 1;  // Grids are identical
+}
+
+// Function to detect if the current grid matches any previous grid (loop detection)
+int detect_loop(int rows, int cols, int grid[rows][cols], int history[][rows][cols], int history_count) {
+    for (int h = 0; h < history_count; h++) {
+        if (grids_are_equal(rows, cols, grid, history[h])) {
+            return 1;  // Loop detected
+        }
+    }
+    return 0;  // No loop detected
+}
 
 int is_perfect_square(int number){ // chech if it's a real square
     int root =sqrt(number);
@@ -21,7 +42,7 @@ int count_live_cells (int rows, int cols, int grid[rows][cols]){
 }
 
 int extract_boards(const char *filename, int boards[MAX_BOARDS][MAX_SIZE][MAX_SIZE], int *boards_sizes){
-FILE *file = fopen(filename,"r");
+FILE *file = fopen(filename, "r");
 if (!file) {
     perror("Error during opening file");
     return -1;
@@ -67,7 +88,6 @@ int run_game_of_life(int rows, int cols, int generations,int history[MAX_HISTORY
     initialize_grid(rows, cols, grid);
 
     for (int gen = 0; gen < generations; gen++) {
-        system("clear");
         printf("====================\n");
         printf("Generation %d:\n", gen + 1);
         display_grid(rows, cols, grid);
@@ -105,7 +125,7 @@ int run_game_of_life(int rows, int cols, int generations,int history[MAX_HISTORY
 }   
 
 void write_array_to_file(const char *filename, int rep[MAX_BOARDS],int size){
-    FILE *file = fopen(filename,"r");
+    FILE *file = fopen(filename, "w");
 if (!file) {
     perror("Error during opening file");
 }
@@ -120,7 +140,7 @@ fclose(file);
 }
 
 int main(int argc, char *argv[]) {
-    if (argc != 4) {
+    if (argc != 5) {
         printf("Usage: %s imput.txt generations nameImput nameOutput\n", argv[0]);
         return 1;
     }
@@ -162,5 +182,5 @@ for(int b= 0; b<board_count; b++){
     live_counts[b] = count_live_cells(size,size,history[final_index]);  
 }
 write_array_to_file(nameOutput,live_counts,board_count);
-printf("program successfully executed");
+printf("program successfully executed\n");
 }
