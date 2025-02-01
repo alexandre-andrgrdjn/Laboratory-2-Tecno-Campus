@@ -1,5 +1,5 @@
 #include "gameoflife.h"
-
+#include <math.h>
 
 
 int is_perfect_square(int number){ // chech if it's a real square
@@ -58,7 +58,7 @@ fclose(file);
 return board_count;
 }
 
-void run_game_of_life(int rows, int cols, int generations,int history[MAX_HISTORY][rows][cols]){
+int run_game_of_life(int rows, int cols, int generations,int history[MAX_HISTORY][rows][cols]){
 
     int grid[rows][cols], next[rows][cols];
 
@@ -75,13 +75,13 @@ void run_game_of_life(int rows, int cols, int generations,int history[MAX_HISTOR
         // Check for static pattern
         if (gen > 0 && grids_are_equal(rows, cols, grid, history[history_count - 1])) {
             printf("Static pattern detected at generation %d, stopping...\n", gen + 1);
-            break;
+            return gen;
         }
 
 // Check for loop pattern
         if (detect_loop(rows, cols, grid, history, history_count)) {
             printf("Loop pattern detected at generation %d, stopping...\n", gen + 1);
-            break;
+            return gen;
         }
 
         // Store current grid in history
@@ -100,6 +100,7 @@ void run_game_of_life(int rows, int cols, int generations,int history[MAX_HISTOR
     printf("\nFinal Generation:\n");
     display_grid(rows, cols, grid);
     printf("Simulation complete.\n");
+    return generations-1;
 
 }   
 
@@ -107,7 +108,6 @@ void write_array_to_file(const char *filename, int rep[MAX_BOARDS],int size){
     FILE *file = fopen(filename,"r");
 if (!file) {
     perror("Error during opening file");
-    return -1;
 }
 
 for (int i = 0; i < size; i++)
@@ -121,6 +121,46 @@ fclose(file);
 
 int main(int argc, char *argv[]) {
     if (argc != 4) {
-        printf("Usage: %s NumRows NumCols NumGenerations\n", argv[0]);
+        printf("Usage: %s imput.txt generations nameImput nameOutput\n", argv[0]);
         return 1;
     }
+const char *imput_txt = argv[1];
+const char *generations_str = argv[2];
+const char *nameImput = argv[3];
+const char *nameOutput = argv[4]; //extract arguments
+
+//check if imput_txt exist
+
+FILE *fp = fopen(imput_txt,"r");
+if (!fp){
+    perror("Error opening imput.txt file");
+    return 1;
+}
+fclose(fp);
+int generations = atoi(generations_str); //convert str to int
+if (generations <= 0){
+    printf("Error : generations must be a positive integer.\n");
+    return 1;
+}
+
+//variable creation
+int boards[MAX_BOARDS][MAX_SIZE][MAX_SIZE]; //each boards will be stock here
+int boards_sizes[MAX_BOARDS] = {0};
+int board_count = extract_boards(nameImput,boards,boards_sizes);
+
+if (board_count==0) {
+    printf("Error, no valid boards found in file %s.\n",nameImput);
+    return 1;
+}
+
+int live_counts[MAX_BOARDS]={0};
+
+for(int b= 0; b<board_count; b++){
+    int size = boards_sizes[b];
+    int history[MAX_HISTORY][size][size]; // prepare history for game simulation
+    int final_index = run_game_of_life(size,size,generations,history);
+    live_counts[b] = count_live_cells(size,size,history[final_index]);  
+}
+write_array_to_file(nameOutput,live_counts,board_count);
+printf("program successfully executed");
+}
