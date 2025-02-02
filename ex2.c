@@ -1,6 +1,25 @@
 #include "gameoflife.h"
 
 
+void display_grid3D(int board_count,int board_sizes[board_count], int grid[board_count][MAX_SIZE][MAX_SIZE]) {
+    for (int k = 0; k < board_count; k++) {
+        printf(" grid %dx%d: \n" , board_sizes[k] , board_sizes[k]);
+             for (int i = 0; i < board_sizes[k]; i++) {
+                for (int j = 0; j < board_sizes[k]; j++) {
+                    printf("%c", grid[k][i][j] ? '#' : '.');
+                    printf(" ");
+        }
+        printf("\n");
+
+    }
+    printf("\n");
+ }
+printf("\n"); 
+}
+
+
+
+
 // Function to check if two grids are equal (for static/loop detection)
 int grids_are_equal(int rows, int cols, int grid1[rows][cols], int grid2[rows][cols]) {
     for (int i = 0; i < rows; i++) {
@@ -42,87 +61,87 @@ int count_live_cells (int rows, int cols, int grid[rows][cols]){
 }
 
 int extract_boards(const char *filename, int boards[MAX_BOARDS][MAX_SIZE][MAX_SIZE], int *boards_sizes){
-FILE *file = fopen(filename, "r");
-if (!file) {
-    perror("Error during opening file");
-    return -1;
-}
-char line[1024];
-int board_count = 0;
-
-while( fgets(line,sizeof(line),file)) {
-
-line[strcspn(line, "\n")] = '\0';  //remove newline character (strcspn(line, "\n")) return the position of the first "\n"
-int len = strlen(line);
-
-if (is_perfect_square(len) == 0){
-    printf("the line '%s' is not a perfect square, next line.\n",line);
-    continue;
-}
-int size = is_perfect_square(len);
-boards_sizes[board_count] = size;
-
-int k=0;
-for (int i =0; i < size; i++){
-    for (int j =0; j < size; j++){
-        boards[board_count][i][j] = line[k++]- '0'; //convert to integer by passing to ASCII code
+    FILE *file = fopen(filename, "r");
+    if (!file) {
+        perror("Error during opening file");
+        return -1;
     }
-}
-board_count++;
+    char line[1024];
+    int board_count = 0;
 
-if (board_count >= MAX_BOARDS){
-    printf("Maximum number of grids reached\n"); //check with MAX_BOARDS number
-    break;
-}
-}
+    while(fgets(line,sizeof(line),file)) {
+
+        line[strcspn(line, "\n")] = '\0';  //remove newline character (strcspn(line, "\n")) return the position of the first "\n"
+        int len = strlen(line);
+
+        if (is_perfect_square(len) == 0){
+            printf("the line '%s' is not a perfect square, next line.\n",line);
+            continue;
+            }
+
+        int size = is_perfect_square(len);
+        boards_sizes[board_count] = size;
+
+        int k=0;
+        printf("Extrating grid of size %d from line : %s\n",size,line);
+        for (int i =0; i < size; i++){
+            for (int j =0; j < size; j++){
+                boards[board_count][i][j] = line[k++] - '0'; //convert to integer by passing to ASCII code
+                printf("line[%d]='%c' -> %d stored at boards [%d][%d][%d]\n",k-1 ,line[k-1],boards[board_count][i][j],board_count,i ,j);
+            }
+        }
+        board_count++;
+
+        if (board_count >= MAX_BOARDS){
+            printf("Maximum number of grids reached\n"); //check with MAX_BOARDS number
+            break;
+        }
+    }
 fclose(file);
 return board_count;
 }
 
-int run_game_of_life(int rows, int cols, int generations,int history[MAX_HISTORY][rows][cols]){
+void run_game_of_life(int generations, int board_count, int *boards_sizes,int boards[MAX_BOARDS][MAX_SIZE][MAX_SIZE] , int live_cells[board_count]){
+for (int k =0 ; k < board_count; k++){
+    int size = boards_sizes[k];
+    int grid[MAX_SIZE][MAX_SIZE], next[MAX_SIZE][MAX_SIZE];
+    int history[MAX_HISTORY][MAX_SIZE][MAX_SIZE];
+    int history_count = 0;
 
-    int grid[rows][cols], next[rows][cols];
+    memcpy(grid,boards[k],sizeof(int)*size*size);
 
-    int history_count = 0;                // Number of stored generations
-
-    initialize_grid(rows, cols, grid);
-
-    for (int gen = 0; gen < generations; gen++) {
+    for (int gen = 0; gen < generations; gen++){
         printf("====================\n");
         printf("Generation %d:\n", gen + 1);
-        display_grid(rows, cols, grid);
+        display_grid(size, size, grid);
 
-        // Check for static pattern
-        if (gen > 0 && grids_are_equal(rows, cols, grid, history[history_count - 1])) {
+         if (gen > 0 && grids_are_equal(size, size, grid, history[history_count - 1])) {
             printf("Static pattern detected at generation %d, stopping...\n", gen + 1);
-            return gen;
+            live_cells[k]=count_live_cells(size,size,grid);
+            break;
         }
 
-// Check for loop pattern
-        if (detect_loop(rows, cols, grid, history, history_count)) {
+         if (detect_loop(size, size, grid, history, history_count)) {
             printf("Loop pattern detected at generation %d, stopping...\n", gen + 1);
-            return gen;
+            live_cells[k]=count_live_cells(size,size,grid);
+            break;
         }
-
-        // Store current grid in history
         if (history_count < MAX_HISTORY) {
             memcpy(history[history_count], grid, sizeof(grid));
             history_count++;
         }
 
-        // Compute the next generation
-        next_generation(rows, cols, grid, next);
+        next_generation(size, size, grid, next);
         memcpy(grid, next, sizeof(grid));  // Update the grid for the next generation
+        live_cells[k]=count_live_cells(size,size,grid);
 
-        usleep(200000);  // Pause for 200 milliseconds
     }
-
     printf("\nFinal Generation:\n");
-    display_grid(rows, cols, grid);
+    display_grid(size, size, grid);
     printf("Simulation complete.\n");
-    return generations-1;
 
-}   
+}
+
 
 void write_array_to_file(const char *filename, int rep[MAX_BOARDS],int size){
     FILE *file = fopen(filename, "w");
@@ -140,18 +159,17 @@ fclose(file);
 }
 
 int main(int argc, char *argv[]) {
-    if (argc != 5) {
-        printf("Usage: %s imput.txt generations nameImput nameOutput\n", argv[0]);
+    if (argc != 4) {
+        printf("Usage: %s Input.txt generations Output.txt \n", argv[0]);
         return 1;
     }
-const char *imput_txt = argv[1];
+const char *Input_txt = argv[1];
 const char *generations_str = argv[2];
-const char *nameImput = argv[3];
-const char *nameOutput = argv[4]; //extract arguments
+const char *Output_txt = argv[3];
 
-//check if imput_txt exist
+//check if input_txt exist
 
-FILE *fp = fopen(imput_txt,"r");
+FILE *fp = fopen(Input_txt,"r");
 if (!fp){
     perror("Error opening imput.txt file");
     return 1;
@@ -166,10 +184,10 @@ if (generations <= 0){
 //variable creation
 int boards[MAX_BOARDS][MAX_SIZE][MAX_SIZE]; //each boards will be stock here
 int boards_sizes[MAX_BOARDS] = {0};
-int board_count = extract_boards(nameImput,boards,boards_sizes);
+int board_count = extract_boards(Input_txt,boards,boards_sizes);
 
 if (board_count==0) {
-    printf("Error, no valid boards found in file %s.\n",nameImput);
+    printf("Error, no valid boards found in file %s.\n",Input_txt);
     return 1;
 }
 
@@ -181,6 +199,6 @@ for(int b= 0; b<board_count; b++){
     int final_index = run_game_of_life(size,size,generations,history);
     live_counts[b] = count_live_cells(size,size,history[final_index]);  
 }
-write_array_to_file(nameOutput,live_counts,board_count);
+write_array_to_file(Output_txt,live_counts,board_count);
 printf("program successfully executed\n");
 }
