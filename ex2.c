@@ -18,8 +18,6 @@ printf("\n");
 }
 
 
-
-
 // Function to check if two grids are equal (for static/loop detection)
 int grids_are_equal(int rows, int cols, int grid1[rows][cols], int grid2[rows][cols]) {
     for (int i = 0; i < rows; i++) {
@@ -78,7 +76,6 @@ int extract_boards(const char *filename, int boards[MAX_BOARDS][MAX_SIZE][MAX_SI
             printf("the line '%s' is not a perfect square, next line.\n",line);
             continue;
             }
-
         int size = is_perfect_square(len);
         boards_sizes[board_count] = size;
 
@@ -100,8 +97,7 @@ int extract_boards(const char *filename, int boards[MAX_BOARDS][MAX_SIZE][MAX_SI
 fclose(file);
 return board_count;
 }
-
-void run_game_of_life(int generations, int board_count, int *boards_sizes,int boards[MAX_BOARDS][MAX_SIZE][MAX_SIZE] , int live_cells[board_count]){
+void run_game_of_life(int generations, int board_count, int *boards_sizes,int boards[MAX_BOARDS][MAX_SIZE][MAX_SIZE],int live_cells[board_count]){
 for (int k =0 ; k < board_count; k++){
     int size = boards_sizes[k];
     int grid[MAX_SIZE][MAX_SIZE], next[MAX_SIZE][MAX_SIZE];
@@ -141,6 +137,7 @@ for (int k =0 ; k < board_count; k++){
     printf("Simulation complete.\n");
 
 }
+}
 
 
 void write_array_to_file(const char *filename, int rep[MAX_BOARDS],int size){
@@ -159,46 +156,43 @@ fclose(file);
 }
 
 int main(int argc, char *argv[]) {
+
     if (argc != 4) {
-        printf("Usage: %s Input.txt generations Output.txt \n", argv[0]);
+        printf("Usage: %s <input_file> <generations> <output_file> \n", argv[0]);
         return 1;
     }
-const char *Input_txt = argv[1];
-const char *generations_str = argv[2];
-const char *Output_txt = argv[3];
+const char *input_file = argv[1];
+int generations = atoi(argv[2]);
+const char *output_file = argv[3];
 
 //check if input_txt exist
 
-FILE *fp = fopen(Input_txt,"r");
+FILE *fp = fopen(input_file,"r");
 if (!fp){
     perror("Error opening imput.txt file");
     return 1;
 }
 fclose(fp);
-int generations = atoi(generations_str); //convert str to int
+
 if (generations <= 0){
     printf("Error : generations must be a positive integer.\n");
     return 1;
 }
 
 //variable creation
+
 int boards[MAX_BOARDS][MAX_SIZE][MAX_SIZE]; //each boards will be stock here
-int boards_sizes[MAX_BOARDS] = {0};
-int board_count = extract_boards(Input_txt,boards,boards_sizes);
+int boards_sizes[MAX_BOARDS];
+int board_count = extract_boards(input_file,boards,boards_sizes);
 
 if (board_count==0) {
-    printf("Error, no valid boards found in file %s.\n",Input_txt);
+    printf("Error, no valid boards found in file %s.\n",input_file);
     return 1;
 }
 
-int live_counts[MAX_BOARDS]={0};
-
-for(int b= 0; b<board_count; b++){
-    int size = boards_sizes[b];
-    int history[MAX_HISTORY][size][size]; // prepare history for game simulation
-    int final_index = run_game_of_life(size,size,generations,history);
-    live_counts[b] = count_live_cells(size,size,history[final_index]);  
-}
-write_array_to_file(Output_txt,live_counts,board_count);
+int live_cells_output[MAX_BOARDS]={0};
+run_game_of_life(generations,board_count,boards_sizes,boards,live_cells_output);
+write_array_to_file(output_file,live_cells_output,board_count);
 printf("program successfully executed\n");
+return 0;
 }

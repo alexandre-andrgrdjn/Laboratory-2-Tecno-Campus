@@ -24,5 +24,4 @@ int is_perfect_square(int number);
 int count_live_cells (int rows, int cols, int grid[rows][cols]);
 int extract_boards(const char *filename, int boards[MAX_BOARDS][MAX_SIZE][MAX_SIZE], int *boards_sizes);
 void write_array_to_file(const char *filename, int rep[MAX_BOARDS],int size);
-int run_game_of_life(int rows, int cols, int generations,int history[MAX_HISTORY][rows][cols]);
 #endif
